@@ -2,6 +2,16 @@ import os
 
 def getName(st):
     return st[0:st.find(".")]
+def change(st):
+    rt = ""
+    for i in st:
+        if st == '-':
+            rt += '_'
+        elif i.isupper(): 
+            rt += i.lower()
+        elif i.islower() or i == '_':
+            rt += i
+    return rt
 
 codes = []
 def write_into_markdown(root, dirs, files):
@@ -35,15 +45,15 @@ def walk_code(fp):
                     fp.write("  - [%s](#%s)\n" % 
                             (
                                 getName(files),
-                                getName(files)
+                                change(getName(files))
                             ))
                     write_into_markdown(root, dirs, files)
 
 with open("codelist.md", "w") as fp:
     walk_code(fp)
     for (name, content) in codes:
-        fp.write("\n")
-        fp.write("# %s\n" % getName(name))
+        fp.write("\n\n")
+        fp.write("# %s\n\n" % change(getName(name)))
         fp.write("```cpp\n")
         fp.write(content)
         fp.write("\n```\n")
