@@ -1,110 +1,122 @@
-- number_theory
-  - [ntt](#ntt)
-  - [FWT](#FWT)
-- code
-- string
-  - [sam](#sam)
-  - [z-algorithm](#z-algorithm)
-  - [SuffixArray](#SuffixArray)
-  - [ac_automation](#ac_automation)
-- data_structure
-  - [Splay](#Splay)
-  - [virtualTree](#virtualTree)
-- graph
-  - [Hungary](#Hungary)
-  - [costFlow](#costFlow)
-  - [bridge](#bridge)
-  - [cutPoint](#cutPoint)
-  - [tarjan](#tarjan)
-  - [maxFlow](#maxFlow)
-  - [dmst](#dmst)
 - math
   - [fft](#fft)
+- string
+  - [sam](#sam)
+  - [z-algorithm](#zalgorithm)
+  - [SuffixArray](#suffixarray)
+  - [ac_automation](#ac_automation)
+- number_theory
+  - [FWT](#fwt)
+  - [ntt](#ntt)
+- graph
+  - [Hungary](#hungary)
+  - [costFlow](#costflow)
+  - [tarjan](#tarjan)
+  - [maxFlow](#maxflow)
+  - [cutPoint](#cutpoint)
+  - [bridge](#bridge)
+  - [dmst](#dmst)
+- data_structure
+  - [Splay](#splay)
+  - [virtualTree](#virtualtree)
 
-# ntt
+
+# fft
+
 ```cpp
-const int mod = 16515073;
-const int g = 5;
 
-void reverse(int *d, int bits) {
-	int n = (1 << bits), j = (1 << bits) >> 1;
-	for (int i = 1; i < n - 1; i++) {
-		if (i < j) swap(d[i], d[j]);
-		int t = (1 << bits) >> 1;
-		while (t <= j) {
+const int N = 1000000;
+const int maxn = 1000000 + 2;
+const double pi = 3.1415926535897932384626433832795;
+
+struct Point {
+	double x, y;
+	Point (double a = 0, double b = 0) : x(a), y(b) {
+	}
+} x1[N / 2], x2[N / 2];
+
+char a[N/2],b[N/2];  
+int sum[N]; 
+
+Point operator + (Point &a, Point &b) {
+	return Point(a.x + b.x, a.y + b.y);
+}
+
+Point operator - (Point &a, Point &b) {
+	return Point(a.x - b.x, a.y - b.y);
+}
+
+Point operator * (Point &a, Point &b) {
+	return Point(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+}
+
+void trans(Point *p, int bit) {
+	int n = (1 << bit), i, j = (1 << bit) >> 1;
+	for (i = 1; i < n - 1; i++) {
+		if (i < j) swap(p[i], p[j]);
+		int t = (1 << bit) >> 1;
+		while (j >= t) {
 			j -= t;
 			t >>= 1;
 		}
 		j += t;
 	}
 }
-void fft(int *d, int bits, int on) {
-	reverse(d, bits);
-	int n = (1 << bits);
-	int aoe = g;
-	if (on == -1) aoe = power(g, mod - 2);
-	for (int s = 0; s < bits; s++) {
+
+void fft(Point *y, int bit, int on) {
+	trans(y, bit);
+	
+	int n = (1 << bit);
+	for (int s = 0; s < bit; s++) {
 		int m = (1 << s) << 1, p = (1 << s);
-		int w = power(aoe, (mod - 1) / m);
+		Point w = Point(cos(on * 2 * pi / m), sin(on * 2 * pi / m));
 		for (int i = 0; i < n; i += m) {
-			int cur = 1;
+			Point cur = Point(1, 0);
 			for (int j = 0; j < p; j++) {
-				int x = d[i + j], y = 1LL * d[i + p + j] * cur % mod;
-				d[i + j] = (x + y) % mod;
-				d[i + p + j] = (x - y) % mod;
-				cur = 1LL * cur * w % mod;
+				Point t = y[i + j];
+				Point s = y[i + j + p] * cur;
+				y[i + j] = t + s;
+				y[i + j + p] = t - s;
+				cur = cur * w;
 			}
 		}
+		//for (int i = 0; i < n; i++) printf("%.6lf\n", y[i].x);
+		//printf("\n");
 	}
-	if (on == -1) {
-		int aoe = power(n, mod - 2);
-		for (int i = 0; i < n; i++) d[i] = 1LL * d[i] * aoe % mod;
-	}
+	if (on == -1) 
+		for (int i = 0; i < n; i++) y[i].x /= n;
+	//printf("--------------\n");
 }
+
+int ans[maxn];
 
 int main() {
+
 	int n, m;
 	scanf("%d%d", &n, &m);
-	for (int i = 0; i <= n; i++) scanf("%d", &a[i]);
-	for (int i = 0; i <= m; i++) scanf("%d", &b[i]);
-	
-	int bits = 0;
-	while ((1 << bits) < max(n + 1, m + 1)) bits++;
-	bits++;
-	
-	int c = (1 << bits);
-	fft(a, bits, 1);
-	fft(b, bits, 1);
-	for (int i = 0; i < c; i++) a[i] = 1LL * a[i] * b[i] % mod;
-	fft(a, bits, -1);
-	for (int i = 0; i <= n + m; i++) printf("%d ", (a[i] + mod) % mod);
-	printf("\n");
-	return 0;
-}
+	n++;
+	m++;
+	for (int i = 0; i < n; i++)
+		scanf("%lf", &x1[i].x);
+	for (int i = 0; i < m; i++)
+		scanf("%lf", &x2[i].x);
+	int bit = 0, least = max(n, m);
+	while ((1 << bit) < (least << 1)) bit++;
+	fft(x1, bit, 1);
+	fft(x2, bit, 1);
+	for (int i = (1 << bit) - 1; i > -1; i--) x1[i] = x1[i] * x2[i];
+	fft(x1, bit, -1);
+	n = n + m - 1;
+	for (int i = 0; i < n; i++) ans[i] = x1[i].x + 0.5;
+	for (int i = 0; i < n - 1; i++) printf("%d ", ans[i]);
+	printf("%d\n", ans[n - 1]);
+}  
+
 ```
 
-# FWT
-```cpp
-xor:
-	tf = (tf(A0)+tf(A1), tf(A0)-tf(A1))
-	utf = (utf((A0+A1) / 2), utf((A0-A1)/ 2))
-and:
-	tf = (tf(A0)+tf(A1), tf(A1));
-	utf = (utf(A0)-utf(A1), utf(A1));
-or:
-	tf = (tf(A0), tf(A1)+tf(A0))
-	utf = (utf(A0), utf(A1)-utf(A0))
-
-void FWT( ll X[], int l, int r, int v ) {
-    if ( l == r ) return;
-    int m = ( l + r ) >> 1;
-    FWT( X, l, m, v ); FWT( X, m + 1, r, v );
-    FOR ( i, 0, m - l ) {
-        X[ l + i ] += X[ m + 1 + i ] * v;
-    }
-```
 
 # sam
+
 ```cpp
 #include <stdio.h>
 #include <string.h>
@@ -188,7 +200,9 @@ int main() {
 
 ```
 
-# z-algorithm
+
+# zalgorithm
+
 ```cpp
 void exkmp(char *ch) {
 	int n = strlen(ch);
@@ -238,7 +252,9 @@ int main() {
 } 
 ```
 
-# SuffixArray
+
+# suffixarray
+
 ```cpp
 
 void work() {
@@ -282,7 +298,9 @@ void getHeight() {
 
 ```
 
+
 # ac_automation
+
 ```cpp
 #include <stdio.h>
 #include <string.h>
@@ -375,7 +393,597 @@ int main() {
 
 ```
 
-# Splay
+
+# fwt
+
+```cpp
+xor:
+	tf = (tf(A0)+tf(A1), tf(A0)-tf(A1))
+	utf = (utf((A0+A1) / 2), utf((A0-A1)/ 2))
+and:
+	tf = (tf(A0)+tf(A1), tf(A1));
+	utf = (utf(A0)-utf(A1), utf(A1));
+or:
+	tf = (tf(A0), tf(A1)+tf(A0))
+	utf = (utf(A0), utf(A1)-utf(A0))
+
+void FWT( ll X[], int l, int r, int v ) {
+    if ( l == r ) return;
+    int m = ( l + r ) >> 1;
+    FWT( X, l, m, v ); FWT( X, m + 1, r, v );
+    FOR ( i, 0, m - l ) {
+        X[ l + i ] += X[ m + 1 + i ] * v;
+    }
+```
+
+
+# ntt
+
+```cpp
+const int mod = 16515073;
+const int g = 5;
+
+void reverse(int *d, int bits) {
+	int n = (1 << bits), j = (1 << bits) >> 1;
+	for (int i = 1; i < n - 1; i++) {
+		if (i < j) swap(d[i], d[j]);
+		int t = (1 << bits) >> 1;
+		while (t <= j) {
+			j -= t;
+			t >>= 1;
+		}
+		j += t;
+	}
+}
+void fft(int *d, int bits, int on) {
+	reverse(d, bits);
+	int n = (1 << bits);
+	int aoe = g;
+	if (on == -1) aoe = power(g, mod - 2);
+	for (int s = 0; s < bits; s++) {
+		int m = (1 << s) << 1, p = (1 << s);
+		int w = power(aoe, (mod - 1) / m);
+		for (int i = 0; i < n; i += m) {
+			int cur = 1;
+			for (int j = 0; j < p; j++) {
+				int x = d[i + j], y = 1LL * d[i + p + j] * cur % mod;
+				d[i + j] = (x + y) % mod;
+				d[i + p + j] = (x - y) % mod;
+				cur = 1LL * cur * w % mod;
+			}
+		}
+	}
+	if (on == -1) {
+		int aoe = power(n, mod - 2);
+		for (int i = 0; i < n; i++) d[i] = 1LL * d[i] * aoe % mod;
+	}
+}
+
+int main() {
+	int n, m;
+	scanf("%d%d", &n, &m);
+	for (int i = 0; i <= n; i++) scanf("%d", &a[i]);
+	for (int i = 0; i <= m; i++) scanf("%d", &b[i]);
+	
+	int bits = 0;
+	while ((1 << bits) < max(n + 1, m + 1)) bits++;
+	bits++;
+	
+	int c = (1 << bits);
+	fft(a, bits, 1);
+	fft(b, bits, 1);
+	for (int i = 0; i < c; i++) a[i] = 1LL * a[i] * b[i] % mod;
+	fft(a, bits, -1);
+	for (int i = 0; i <= n + m; i++) printf("%d ", (a[i] + mod) % mod);
+	printf("\n");
+	return 0;
+}
+```
+
+
+# hungary
+
+```cpp
+#include <stdio.h>
+
+const int maxt = 250001;
+const int maxn = 501;
+
+int n, m, t;
+int boy[maxn], girl[maxn];
+bool map[maxn][maxn], vis[maxn];
+
+bool trace(int u, int v) {
+    if (vis[v]) return false;
+    vis[v] = true;
+    if (!girl[v]) {
+        boy[u] = v;
+        girl[v] = u;
+        return true;
+    }
+    for (int i = 1; i <= m; i++)
+        if (map[ girl[v] ][i] && trace(girl[v], i)) {
+            boy[u] = v;
+            girl[v] = u;
+            return true;
+        }
+    return false;
+}
+
+int main() {
+    int a, b;
+    scanf("%d%d%d", &n, &m, &t);
+    while (t--) {
+        scanf("%d%d", &a, &b);
+        map[a][b] = true;
+    }
+    
+    int ans = 0;
+    for (int i = 1; i <= n; i++) {
+        if (boy[i]) continue;
+        for (int j = 1; j <= m; j++) vis[j] = false;
+        for (int j = 1; j <= m; j++)
+            if (map[i][j] && trace(i, j)) {
+                ans++;
+                break;
+            }
+    }
+    printf("%d\n", ans);
+    for (int i = 1; i <= n; i++) printf("%d ", boy[i]);
+    printf("\n");
+    return 0;
+}
+
+```
+
+
+# costflow
+
+```cpp
+
+```
+
+
+# tarjan
+
+```cpp
+
+void tarjan(int u, int pre) {
+	dfn[u] = low[u] = ++times;
+	state[u] = 1;
+	for (int i = head[u]; i != -1; i = e[i].next) {
+		int v = e[i].v;
+		if (v == pre) continue;
+		if (!state[v]) {
+			tarjan(v, u);
+			low[u] = min(low[u], low[v]);
+		}
+		else if (state[v] == 1) low[u] = min(low[u], dfn[v]);
+	}
+	if (dfn[pre] <= low[u]) {
+		if (pre == 1) {
+			rootCnt++;
+		}
+		else cut[pre] = true;
+	}
+}
+
+```
+
+
+# maxflow
+
+```cpp
+namespace Network {
+    const int maxn = 600002;
+    const int maxm = 600002;
+    const int inf = 2147483647;
+
+    struct Tedge {
+        int v, next, f;
+    } e[maxm * 2];
+
+    int N;
+    int head[maxn];
+
+    void insert(int x, int y, int c) {
+        e[N].v = y; e[N].next = head[x]; e[N].f = c;
+        head[x] = N; N++;
+        if (N & 1) insert(y, x, 0);
+    }
+
+    int st, ed;
+    int o[maxn], dis[maxn];
+
+    void init(int S, int T) {
+        st = S; ed = T;
+        for (int i = S; i <= T; i++) head[i] = -1;
+        N = 0;
+    }
+
+    bool bfs() {
+        for (int i = 1; i <= ed; i++) dis[i] = -1;
+        o[0] = st; dis[st] = 0;
+        for (int h = 0, t = 0; h <= t; h++) {
+            int u = o[h];
+            if (u == ed) return true;
+            for (int i = head[u]; i != -1; i = e[i].next)
+                if (e[i].f > 0 && dis[ e[i].v ] == -1) {
+                    o[++t] = e[i].v;
+                    dis[ e[i].v ] = dis[u] + 1;
+                }
+        }
+        return false;
+    }
+
+    int dfs(int u, int limit) {
+        if (u == ed) return limit;
+        int rt = 0;
+        for (int i = head[u]; i != -1; i = e[i].next) 
+            if (dis[ e[i].v ] == dis[u] + 1 && e[i].f > 0) {
+                int tmp = dfs(e[i].v, min(e[i].f, limit - rt));
+                e[i].f -= tmp;
+                e[i ^ 1].f += tmp;
+                rt += tmp;
+                if (rt == limit) return rt;
+            }	
+        dis[u] = -1;
+        return rt;
+    }
+
+    int maxFlow() {
+        int ans = 0;
+        while (bfs()) ans += dfs(st, inf);
+        return ans;
+    }
+};
+
+
+```
+
+
+# cutpoint
+
+```cpp
+#include <fstream>
+#include <iostream>
+#include <math.h>
+#include <algorithm>
+#include <string>
+#include <stack>
+using namespace std;
+
+const int maxn = 1000 + 2;
+
+struct Tedge {
+	int next, v;
+} e[maxn * maxn];
+
+int head[maxn], N;
+
+void Insert(int x, int y) {
+	e[N].v = y;
+	e[N].next = head[x];
+	head[x] = N;
+	N++;
+}
+
+char ch;
+
+int get() {
+	ch = ' ';
+	int rt = 0;
+	while (ch < '0' || ch > '9') ch = getchar();
+	for ( ; ch >= '0' && ch <= '9'; ch = getchar()) rt = rt * 10 + ch - '0';
+	return rt;
+}
+
+int n, t;
+int dfn[maxn], low[maxn], state[maxn], anc[maxn];
+bool isCut[maxn];
+
+bool Init() {
+	n = get();
+	if (n == 0) return false;
+	for (int i = 0; i < n; i++) head[i] = -1;
+	while (true) {
+		int u = get();
+		if (u == 0) break;
+		u--;
+		while (true) {
+			int v = get();
+			v--;
+			Insert(u, v);
+			Insert(v, u);
+			if (ch == '\n') break;
+		}
+	}
+	return true;
+}
+
+void Tarjan(int u, int par) {
+	dfn[u] = t;
+	low[u] = t;
+	state[u] = 1;
+	anc[u] = par;
+	t++;
+	int cnt = 0;
+	for (int i = head[u]; i != -1; i = e[i].next) {
+		int v = e[i].v;
+		if (state[v] == 0) {
+			Tarjan(v, u);
+			low[u] = min(low[u], low[v]);
+			cnt++;
+		}
+		else if (state[v] == 1) low[u] = min(low[u], dfn[v]);
+	}
+	if (u == 0 && cnt > 1) {
+		isCut[u] = true;
+		return ;
+	}
+	if (u != 0) {
+		for (int i = head[u]; i != -1; i = e[i].next) {
+			int v = e[i].v;
+			if (anc[v] != u) continue;
+			if (low[v] >= dfn[u]) {
+				isCut[u] = true;
+				return ;
+			}
+		}
+	}
+}
+
+void Solve() {
+	for (int i = 0; i < n; i++) state[i] = 0;
+	for (int i = 0; i < n; i++) isCut[i] = false;
+	Tarjan(0, -1);
+	int s = 0;
+	for (int i = 0; i < n; i++)
+		if (isCut[i]) s++;
+	cout << s << endl;
+}
+
+int main() {
+	while (Init()) 
+		Solve();
+	return 0;
+}
+```
+
+
+# bridge
+
+```cpp
+#include <fstream>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+const int maxm = 1000 + 2;
+const int maxn = 1000 + 2;
+
+struct Tedge {
+	int v, next;
+} e[maxm * 2];
+
+int N;
+int head[maxn];
+
+void insert(int x, int y) {
+	e[N].v = y;
+	e[N].next = head[x];
+	head[x] = N;
+	N++;
+}
+
+int n, r;
+
+void Init() {
+	int x, y;
+	scanf("%d%d", &n, &r);
+	for (int i = 0; i < n; i++) head[i] = -1;
+	for (int i = 0; i < r; i++) {
+		scanf("%d%d", &x, &y);
+		x--;
+		y--;
+		insert(x, y);
+		insert(y, x);
+	}
+}
+
+int top, times, flag;
+int stack[maxn], dfn[maxn], low[maxn], inx[maxn];
+bool vis[maxn];
+
+void dfs(int u, int pre) {
+
+
+	stack[++top] = u;
+	dfn[u] = low[u] = times++;
+	vis[u] = true;
+	for (int i = head[u]; i != -1; i = e[i].next) {
+		int v = e[i].v;
+		if (pre == v) continue;
+		if (vis[v]) low[u] = min(low[u], dfn[v]);
+		else {
+			dfs(v, u);
+			low[u] = min(low[u], low[v]);
+			
+			if (low[v] > dfn[u]) {
+				flag++;
+				while (true) {
+					inx[ stack[top] ] = flag;
+					top--;
+					if ( stack[top + 1] == v ) break;
+				}
+			}
+		}
+	}
+}
+
+bool map[maxn][maxn];
+
+void Solve() {
+	for (int i = 0; i < n; i++)
+		if (!vis[i]) {
+			dfs(i, -1);
+			if (top > -1) flag++;
+			while (top > -1) inx[ stack[top--] ] = flag;
+		}
+	for (int i = 0; i < n; i++)
+		for (int j = head[i]; j != -1; j = e[j].next) {
+			int v = e[j].v;
+			if (inx[v] != inx[i]) map[ inx[i] ][ inx[v] ] = true;
+		}
+	if (flag == 1) {
+		printf("0\n");
+		return ;
+	}
+	
+	int c = 0;
+	for (int i = 1; i <= flag; i++) {
+		int cur = 0;
+		for (int j = 1; j <= flag; j++)
+			cur += map[i][j];
+		if (cur == 1) c++;
+	}
+	
+	cout << (c + 1) / 2 << endl;
+}
+
+int main() {
+
+	Init();
+	Solve();
+	return 0;
+}
+```
+
+
+# dmst
+
+```cpp
+#include <vector>
+#include <cassert>
+#include <cstdio>
+#include <algorithm>
+using namespace std;
+
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define REP(i, n) FOR(i, 0, n)
+
+typedef long long llint;
+
+struct Edge {
+  int x, y, w;
+};
+
+bool operator < (const Edge &a, const Edge &b) {
+  return a.x < b.x || (a.x == b.x && a.y < b.y);
+}
+
+int dmst(int N, vector <Edge> &E, int root) {
+  const int inf = -1e9;
+  vector<int> cost(N), back(N), label(N), bio(N);
+  int ret = 0;
+  while (1) {
+    REP(i, N) cost[i] = inf;
+    for (auto e:  E) {
+      if (e.x == e.y) continue;
+      if (e.w > cost[e.y]) cost[e.y] = e.w, back[e.y] = e.x;
+    }
+    cost[root] = 0;
+    REP(i, N) if (cost[i] == inf) return -1;
+    REP(i, N) ret += cost[i];
+    int K = 0;
+    REP(i, N) label[i] = -1;
+    REP(i, N) bio[i] = -1;
+    REP(i, N) {
+      int x = i;
+      for (; x != root && bio[x] == -1; x = back[x])
+        bio[x] = i;
+      if (x != root && bio[x] == i) {
+        for (; label[x] == -1; x = back[x])
+          label[x] = K;
+        ++K;
+      }
+    }
+    if (K == 0) break;
+    REP(i, N) if (label[i] == -1)
+      label[i] = K++;
+
+    for (auto & e:  E) {
+      int xx = label[e.x];
+      int yy = label[e.y];
+      if (xx != yy)
+        e.w -= cost[e.y];
+      e.x = xx;
+      e.y = yy;
+    }
+    root = label[root];
+    N = K;
+  }
+  return ret;
+}
+
+void check_connectivity(int N, vector<Edge> &E) {
+  vector<bool> vis(N);
+  vis[0] = true;
+  REP(i, N) {
+    for (auto e: E) {
+      if (vis[e.x]) vis[e.y] = true;
+    }
+  }
+  REP(i, N) {
+    assert(vis[i]);
+  }
+}
+
+void check_dup(vector<Edge> &E) {
+  sort(E.begin(), E.end());
+  REP(i, E.size() - 1) {
+    Edge &a = E[i];
+    Edge &b = E[i + 1];
+    assert(a.x != b.x || a.y != b.y);
+  }
+}
+
+int main() {
+  int tn, n, m;
+  scanf("%d", &tn);
+  REP(ti, tn) {
+    scanf("%d%d", &n, &m);
+    assert(1 <= n && n <= 1000 && 1 <= m && m <= 10000);
+    vector<Edge> edges;
+    REP(i, m) {
+      Edge e;
+      scanf("%d%d%d", &e.x, &e.y, &e.w);
+      assert(1 <= e.x && e.x <= n);
+      assert(1 <= e.y && e.y <= n);
+      assert(1 <= e.w && e.w <= 100);
+      assert(e.y != 1);
+      e.x -= 1; e.y -= 1;
+      e.w *= n;
+      if (e.y == n - 1) {
+        e.w += (n - 1 - e.x);
+      }
+      edges.push_back(e);
+    }
+    check_connectivity(n, edges);
+    check_dup(edges);
+    int ans = dmst(n, edges, 0);
+    int cost = ans / n;
+    int idx = n - 1 - (ans % n);
+    printf("%d %d\n", cost, idx + 1);
+  }
+  return 0;
+}
+
+```
+
+
+# splay
+
 ```cpp
 #include <stdio.h>
 
@@ -500,7 +1108,9 @@ int main() {
 
 ```
 
-# virtualTree
+
+# virtualtree
+
 ```cpp
 #include <fstream>
 #include <iostream>
@@ -698,584 +1308,5 @@ int main() {
 
 	return 0;
 }
-
-```
-
-# Hungary
-```cpp
-#include <stdio.h>
-
-const int maxt = 250001;
-const int maxn = 501;
-
-int n, m, t;
-int boy[maxn], girl[maxn];
-bool map[maxn][maxn], vis[maxn];
-
-bool trace(int u, int v) {
-    if (vis[v]) return false;
-    vis[v] = true;
-    if (!girl[v]) {
-        boy[u] = v;
-        girl[v] = u;
-        return true;
-    }
-    for (int i = 1; i <= m; i++)
-        if (map[ girl[v] ][i] && trace(girl[v], i)) {
-            boy[u] = v;
-            girl[v] = u;
-            return true;
-        }
-    return false;
-}
-
-int main() {
-    int a, b;
-    scanf("%d%d%d", &n, &m, &t);
-    while (t--) {
-        scanf("%d%d", &a, &b);
-        map[a][b] = true;
-    }
-    
-    int ans = 0;
-    for (int i = 1; i <= n; i++) {
-        if (boy[i]) continue;
-        for (int j = 1; j <= m; j++) vis[j] = false;
-        for (int j = 1; j <= m; j++)
-            if (map[i][j] && trace(i, j)) {
-                ans++;
-                break;
-            }
-    }
-    printf("%d\n", ans);
-    for (int i = 1; i <= n; i++) printf("%d ", boy[i]);
-    printf("\n");
-    return 0;
-}
-
-```
-
-# costFlow
-```cpp
-
-```
-
-# bridge
-```cpp
-#include <fstream>
-#include <iostream>
-#include <algorithm>
-using namespace std;
-
-const int maxm = 1000 + 2;
-const int maxn = 1000 + 2;
-
-struct Tedge {
-	int v, next;
-} e[maxm * 2];
-
-int N;
-int head[maxn];
-
-void insert(int x, int y) {
-	e[N].v = y;
-	e[N].next = head[x];
-	head[x] = N;
-	N++;
-}
-
-int n, r;
-
-void Init() {
-	int x, y;
-	scanf("%d%d", &n, &r);
-	for (int i = 0; i < n; i++) head[i] = -1;
-	for (int i = 0; i < r; i++) {
-		scanf("%d%d", &x, &y);
-		x--;
-		y--;
-		insert(x, y);
-		insert(y, x);
-	}
-}
-
-int top, times, flag;
-int stack[maxn], dfn[maxn], low[maxn], inx[maxn];
-bool vis[maxn];
-
-void dfs(int u, int pre) {
-
-
-	stack[++top] = u;
-	dfn[u] = low[u] = times++;
-	vis[u] = true;
-	for (int i = head[u]; i != -1; i = e[i].next) {
-		int v = e[i].v;
-		if (pre == v) continue;
-		if (vis[v]) low[u] = min(low[u], dfn[v]);
-		else {
-			dfs(v, u);
-			low[u] = min(low[u], low[v]);
-			
-			if (low[v] > dfn[u]) {
-				flag++;
-				while (true) {
-					inx[ stack[top] ] = flag;
-					top--;
-					if ( stack[top + 1] == v ) break;
-				}
-			}
-		}
-	}
-}
-
-bool map[maxn][maxn];
-
-void Solve() {
-	for (int i = 0; i < n; i++)
-		if (!vis[i]) {
-			dfs(i, -1);
-			if (top > -1) flag++;
-			while (top > -1) inx[ stack[top--] ] = flag;
-		}
-	for (int i = 0; i < n; i++)
-		for (int j = head[i]; j != -1; j = e[j].next) {
-			int v = e[j].v;
-			if (inx[v] != inx[i]) map[ inx[i] ][ inx[v] ] = true;
-		}
-	if (flag == 1) {
-		printf("0\n");
-		return ;
-	}
-	
-	int c = 0;
-	for (int i = 1; i <= flag; i++) {
-		int cur = 0;
-		for (int j = 1; j <= flag; j++)
-			cur += map[i][j];
-		if (cur == 1) c++;
-	}
-	
-	cout << (c + 1) / 2 << endl;
-}
-
-int main() {
-
-	Init();
-	Solve();
-	return 0;
-}
-```
-
-# cutPoint
-```cpp
-#include <fstream>
-#include <iostream>
-#include <math.h>
-#include <algorithm>
-#include <string>
-#include <stack>
-using namespace std;
-
-const int maxn = 1000 + 2;
-
-struct Tedge {
-	int next, v;
-} e[maxn * maxn];
-
-int head[maxn], N;
-
-void Insert(int x, int y) {
-	e[N].v = y;
-	e[N].next = head[x];
-	head[x] = N;
-	N++;
-}
-
-char ch;
-
-int get() {
-	ch = ' ';
-	int rt = 0;
-	while (ch < '0' || ch > '9') ch = getchar();
-	for ( ; ch >= '0' && ch <= '9'; ch = getchar()) rt = rt * 10 + ch - '0';
-	return rt;
-}
-
-int n, t;
-int dfn[maxn], low[maxn], state[maxn], anc[maxn];
-bool isCut[maxn];
-
-bool Init() {
-	n = get();
-	if (n == 0) return false;
-	for (int i = 0; i < n; i++) head[i] = -1;
-	while (true) {
-		int u = get();
-		if (u == 0) break;
-		u--;
-		while (true) {
-			int v = get();
-			v--;
-			Insert(u, v);
-			Insert(v, u);
-			if (ch == '\n') break;
-		}
-	}
-	return true;
-}
-
-void Tarjan(int u, int par) {
-	dfn[u] = t;
-	low[u] = t;
-	state[u] = 1;
-	anc[u] = par;
-	t++;
-	int cnt = 0;
-	for (int i = head[u]; i != -1; i = e[i].next) {
-		int v = e[i].v;
-		if (state[v] == 0) {
-			Tarjan(v, u);
-			low[u] = min(low[u], low[v]);
-			cnt++;
-		}
-		else if (state[v] == 1) low[u] = min(low[u], dfn[v]);
-	}
-	if (u == 0 && cnt > 1) {
-		isCut[u] = true;
-		return ;
-	}
-	if (u != 0) {
-		for (int i = head[u]; i != -1; i = e[i].next) {
-			int v = e[i].v;
-			if (anc[v] != u) continue;
-			if (low[v] >= dfn[u]) {
-				isCut[u] = true;
-				return ;
-			}
-		}
-	}
-}
-
-void Solve() {
-	for (int i = 0; i < n; i++) state[i] = 0;
-	for (int i = 0; i < n; i++) isCut[i] = false;
-	Tarjan(0, -1);
-	int s = 0;
-	for (int i = 0; i < n; i++)
-		if (isCut[i]) s++;
-	cout << s << endl;
-}
-
-int main() {
-	while (Init()) 
-		Solve();
-	return 0;
-}
-```
-
-# tarjan
-```cpp
-
-void tarjan(int u, int pre) {
-	dfn[u] = low[u] = ++times;
-	state[u] = 1;
-	for (int i = head[u]; i != -1; i = e[i].next) {
-		int v = e[i].v;
-		if (v == pre) continue;
-		if (!state[v]) {
-			tarjan(v, u);
-			low[u] = min(low[u], low[v]);
-		}
-		else if (state[v] == 1) low[u] = min(low[u], dfn[v]);
-	}
-	if (dfn[pre] <= low[u]) {
-		if (pre == 1) {
-			rootCnt++;
-		}
-		else cut[pre] = true;
-	}
-}
-
-```
-
-# maxFlow
-```cpp
-namespace Network {
-    const int maxn = 600002;
-    const int maxm = 600002;
-    const int inf = 2147483647;
-
-    struct Tedge {
-        int v, next, f;
-    } e[maxm * 2];
-
-    int N;
-    int head[maxn];
-
-    void insert(int x, int y, int c) {
-        e[N].v = y; e[N].next = head[x]; e[N].f = c;
-        head[x] = N; N++;
-        if (N & 1) insert(y, x, 0);
-    }
-
-    int st, ed;
-    int o[maxn], dis[maxn];
-
-    void init(int S, int T) {
-        st = S; ed = T;
-        for (int i = S; i <= T; i++) head[i] = -1;
-        N = 0;
-    }
-
-    bool bfs() {
-        for (int i = 1; i <= ed; i++) dis[i] = -1;
-        o[0] = st; dis[st] = 0;
-        for (int h = 0, t = 0; h <= t; h++) {
-            int u = o[h];
-            if (u == ed) return true;
-            for (int i = head[u]; i != -1; i = e[i].next)
-                if (e[i].f > 0 && dis[ e[i].v ] == -1) {
-                    o[++t] = e[i].v;
-                    dis[ e[i].v ] = dis[u] + 1;
-                }
-        }
-        return false;
-    }
-
-    int dfs(int u, int limit) {
-        if (u == ed) return limit;
-        int rt = 0;
-        for (int i = head[u]; i != -1; i = e[i].next) 
-            if (dis[ e[i].v ] == dis[u] + 1 && e[i].f > 0) {
-                int tmp = dfs(e[i].v, min(e[i].f, limit - rt));
-                e[i].f -= tmp;
-                e[i ^ 1].f += tmp;
-                rt += tmp;
-                if (rt == limit) return rt;
-            }	
-        dis[u] = -1;
-        return rt;
-    }
-
-    int maxFlow() {
-        int ans = 0;
-        while (bfs()) ans += dfs(st, inf);
-        return ans;
-    }
-};
-
-
-```
-
-# dmst
-```cpp
-#include <vector>
-#include <cassert>
-#include <cstdio>
-#include <algorithm>
-using namespace std;
-
-#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
-#define REP(i, n) FOR(i, 0, n)
-
-typedef long long llint;
-
-struct Edge {
-  int x, y, w;
-};
-
-bool operator < (const Edge &a, const Edge &b) {
-  return a.x < b.x || (a.x == b.x && a.y < b.y);
-}
-
-int dmst(int N, vector <Edge> &E, int root) {
-  const int inf = -1e9;
-  vector<int> cost(N), back(N), label(N), bio(N);
-  int ret = 0;
-  while (1) {
-    REP(i, N) cost[i] = inf;
-    for (auto e:  E) {
-      if (e.x == e.y) continue;
-      if (e.w > cost[e.y]) cost[e.y] = e.w, back[e.y] = e.x;
-    }
-    cost[root] = 0;
-    REP(i, N) if (cost[i] == inf) return -1;
-    REP(i, N) ret += cost[i];
-    int K = 0;
-    REP(i, N) label[i] = -1;
-    REP(i, N) bio[i] = -1;
-    REP(i, N) {
-      int x = i;
-      for (; x != root && bio[x] == -1; x = back[x])
-        bio[x] = i;
-      if (x != root && bio[x] == i) {
-        for (; label[x] == -1; x = back[x])
-          label[x] = K;
-        ++K;
-      }
-    }
-    if (K == 0) break;
-    REP(i, N) if (label[i] == -1)
-      label[i] = K++;
-
-    for (auto & e:  E) {
-      int xx = label[e.x];
-      int yy = label[e.y];
-      if (xx != yy)
-        e.w -= cost[e.y];
-      e.x = xx;
-      e.y = yy;
-    }
-    root = label[root];
-    N = K;
-  }
-  return ret;
-}
-
-void check_connectivity(int N, vector<Edge> &E) {
-  vector<bool> vis(N);
-  vis[0] = true;
-  REP(i, N) {
-    for (auto e: E) {
-      if (vis[e.x]) vis[e.y] = true;
-    }
-  }
-  REP(i, N) {
-    assert(vis[i]);
-  }
-}
-
-void check_dup(vector<Edge> &E) {
-  sort(E.begin(), E.end());
-  REP(i, E.size() - 1) {
-    Edge &a = E[i];
-    Edge &b = E[i + 1];
-    assert(a.x != b.x || a.y != b.y);
-  }
-}
-
-int main() {
-  int tn, n, m;
-  scanf("%d", &tn);
-  REP(ti, tn) {
-    scanf("%d%d", &n, &m);
-    assert(1 <= n && n <= 1000 && 1 <= m && m <= 10000);
-    vector<Edge> edges;
-    REP(i, m) {
-      Edge e;
-      scanf("%d%d%d", &e.x, &e.y, &e.w);
-      assert(1 <= e.x && e.x <= n);
-      assert(1 <= e.y && e.y <= n);
-      assert(1 <= e.w && e.w <= 100);
-      assert(e.y != 1);
-      e.x -= 1; e.y -= 1;
-      e.w *= n;
-      if (e.y == n - 1) {
-        e.w += (n - 1 - e.x);
-      }
-      edges.push_back(e);
-    }
-    check_connectivity(n, edges);
-    check_dup(edges);
-    int ans = dmst(n, edges, 0);
-    int cost = ans / n;
-    int idx = n - 1 - (ans % n);
-    printf("%d %d\n", cost, idx + 1);
-  }
-  return 0;
-}
-
-```
-
-# fft
-```cpp
-
-const int N = 1000000;
-const int maxn = 1000000 + 2;
-const double pi = 3.1415926535897932384626433832795;
-
-struct Point {
-	double x, y;
-	Point (double a = 0, double b = 0) : x(a), y(b) {
-	}
-} x1[N / 2], x2[N / 2];
-
-char a[N/2],b[N/2];  
-int sum[N]; 
-
-Point operator + (Point &a, Point &b) {
-	return Point(a.x + b.x, a.y + b.y);
-}
-
-Point operator - (Point &a, Point &b) {
-	return Point(a.x - b.x, a.y - b.y);
-}
-
-Point operator * (Point &a, Point &b) {
-	return Point(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
-}
-
-void trans(Point *p, int bit) {
-	int n = (1 << bit), i, j = (1 << bit) >> 1;
-	for (i = 1; i < n - 1; i++) {
-		if (i < j) swap(p[i], p[j]);
-		int t = (1 << bit) >> 1;
-		while (j >= t) {
-			j -= t;
-			t >>= 1;
-		}
-		j += t;
-	}
-}
-
-void fft(Point *y, int bit, int on) {
-	trans(y, bit);
-	
-	int n = (1 << bit);
-	for (int s = 0; s < bit; s++) {
-		int m = (1 << s) << 1, p = (1 << s);
-		Point w = Point(cos(on * 2 * pi / m), sin(on * 2 * pi / m));
-		for (int i = 0; i < n; i += m) {
-			Point cur = Point(1, 0);
-			for (int j = 0; j < p; j++) {
-				Point t = y[i + j];
-				Point s = y[i + j + p] * cur;
-				y[i + j] = t + s;
-				y[i + j + p] = t - s;
-				cur = cur * w;
-			}
-		}
-		//for (int i = 0; i < n; i++) printf("%.6lf\n", y[i].x);
-		//printf("\n");
-	}
-	if (on == -1) 
-		for (int i = 0; i < n; i++) y[i].x /= n;
-	//printf("--------------\n");
-}
-
-int ans[maxn];
-
-int main() {
-
-	int n, m;
-	scanf("%d%d", &n, &m);
-	n++;
-	m++;
-	for (int i = 0; i < n; i++)
-		scanf("%lf", &x1[i].x);
-	for (int i = 0; i < m; i++)
-		scanf("%lf", &x2[i].x);
-	int bit = 0, least = max(n, m);
-	while ((1 << bit) < (least << 1)) bit++;
-	fft(x1, bit, 1);
-	fft(x2, bit, 1);
-	for (int i = (1 << bit) - 1; i > -1; i--) x1[i] = x1[i] * x2[i];
-	fft(x1, bit, -1);
-	n = n + m - 1;
-	for (int i = 0; i < n; i++) ans[i] = x1[i].x + 0.5;
-	for (int i = 0; i < n - 1; i++) printf("%d ", ans[i]);
-	printf("%d\n", ans[n - 1]);
-}  
 
 ```
