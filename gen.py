@@ -1,5 +1,4 @@
 import os
-import chardet
 
 def getName(st):
     return st[0:st.find(".")]

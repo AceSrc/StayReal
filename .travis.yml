@@ -1,19 +1,18 @@
 language: node_js
 node_js:
   - "5.5"
-python:
-  - "3.4"
+
 install:
  - "npm install gitbook -g"
  - "npm install -g gitbook-cli"
 script:
  - "gitbook build"
 after_script:
+  - sudo python gen.py
   - rm ./docs/* -rf
   - gitbook build
   - cp ./_book/* ./docs/ -rf
   - rm _book -rf
-  - python gen.py
   - git remote add builds "https://${GH_TOKEN}@${GH_REF}" 
   - git fetch builds
   - git config user.name "travis"
