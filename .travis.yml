@@ -9,9 +9,8 @@ script:
  - "gitbook build"
 after_script:
   - sudo python gen.py
-  - rm ./docs/* -rf
   - gitbook build
-  - cp ./_book/* ./docs/ -rf
+  - cp ./_book/* . -rf
   - rm _book -rf
   - git remote add builds "https://${GH_TOKEN}@${GH_REF}" 
   - git fetch builds
@@ -23,7 +22,7 @@ after_script:
   - git branch -a
   - git log remotes/builds/master
   - git log 
-  - git push -f builds master
+  - git push -f builds gh-pages
 
 env:
   global:
