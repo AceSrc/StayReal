@@ -1,0 +1,28 @@
+language: "node_js"
+node_js:
+ - "node"
+install:
+ - "npm install gitbook -g"
+ - "npm install -g gitbook-cli"
+script:
+ - "gitbook build"
+after_script:
+  - rm ./docs/* -rf
+  - gitbook build
+  - cp ./_book/* ./docs/ -rf
+  - rm _book -rf
+  - git remote add builds "https://${GH_TOKEN}@${GH_REF}" 
+  - git fetch builds
+  - git config user.name "travis"
+  - git config user.email ""
+  - git checkout master
+  - git add .
+  - git commit -m "Build"
+  - git branch -a
+  - git log remotes/builds/master
+  - git log 
+  - git push -f builds master
+
+env:
+  global:
+    - GH_REF: github.com/AceSrc/StayReal.git
