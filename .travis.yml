@@ -23,7 +23,7 @@ after_script:
   - git branch -a
   - git log remotes/builds/master
   - git log 
-  - git push -f builds master
+  - git push -f builds gh-pages
 
 env:
   global:
